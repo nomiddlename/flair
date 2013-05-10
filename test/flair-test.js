@@ -6,10 +6,25 @@ var should = require('should')
 
 describe('flair', function() {
   describe('#swagger', function() {
-    var app = flair.swagger(express());
+    var appToDescribe = express()
+    , app;
+
+    //must have at least one route defined
+    appToDescribe.get('/something', function() {});
+    app = flair.swagger(appToDescribe);
 
     it('should expect an express app to document', function() {
-      (function() { flair.swagger() }).should.throw();
+      (function() { flair.swagger(); }).should.throw();
+    });
+
+    it('should expect an express app with routes', function() {
+      (function() { flair.swagger(express()); }).should.throw();
+    });
+
+    it('should not return anything if there are no described routes', function() {
+      supertest(app)
+        .get('/api-doc')
+        .expect(404);
     });
 
     it('should return an express app', function() {
@@ -22,7 +37,7 @@ describe('flair', function() {
 
     it('should respond with a swagger-compliant json doc', function(done) {
       supertest(app)
-        .get('/')
+        .get('/api-doc')
         .set('Content-Type', 'application/json')
         .expect('Content-Type', 'application/json; charset=utf-8')
         .expect(200)
@@ -39,11 +54,11 @@ describe('flair', function() {
     });
 
     describe('when provided with an api version', function() {
-      var app = flair.swagger(express(), { version: "0.5" });
+      var app = flair.swagger(appToDescribe, { version: "0.5" });
       
       it('should respond with that version', function(done) {
         supertest(app)
-          .get('/')
+          .get('/api-doc')
           .set('Content-Type', 'application/json')
           .expect(200)
           .end(function(err, res) {
@@ -54,11 +69,11 @@ describe('flair', function() {
     });
 
     describe('when provided with a docPath', function() {
-      var app = flair.swagger(express(), { docPath: '/something' });
+      var app = flair.swagger(appToDescribe, { docPath: '/something' });
 
       it('should not respond on the default path', function(done) {
         supertest(app)
-          .get('/')
+          .get('/api-doc')
           .expect(404, done);
       });
       
@@ -70,11 +85,11 @@ describe('flair', function() {
     });
 
     describe('when provided with a base path', function() {
-      var app = flair.swagger(express(), { basePath: "/pants" });
+      var app = flair.swagger(appToDescribe, { basePath: "/pants" });
       
       it('should respond with that version and basePath', function(done) {
         supertest(app)
-          .get('/')
+          .get('/api-doc')
           .set('Content-Type', 'application/json')
           .expect(200)
           .end(function(err, res) {
@@ -99,18 +114,18 @@ describe('flair', function() {
 
       it('should include the top-level resource path in the apis array', function(done) {
         supertest(flairedApp)
-          .get('/')
+          .get('/api-doc')
           .set('Content-Type', 'application/json')
           .expect(200)
           .end(function(err, res) {
             res.body.apis.should.have.length(1);
-            res.body.apis[0].path.should.equal('/pants');
+            res.body.apis[0].path.should.equal('/api-doc/pants');
             res.body.apis[0].description.should.equal('none');
             done(err);
           });
       });
 
-      it('should not still call the handler', function(done) {
+      it('should still call the handler', function(done) {
         supertest(app)
           .get('/pants')
           .expect(200, "I'm still here.", done);
@@ -118,7 +133,7 @@ describe('flair', function() {
 
       it('should expose the resource docs on api.path', function(done) {
         supertest(flairedApp)
-          .get('/pants')
+          .get('/api-doc/pants')
           .expect('Content-Type', 'application/json; charset=utf-8')
           .expect(200)
           .end(function(err, res) {
@@ -164,10 +179,10 @@ describe('flair', function() {
 
       it('should not include the routes that are not described', function(done) {
         supertest(flairedApp)
-          .get('/')
+          .get('/api-doc')
           .end(function(err, res) {
             res.body.apis.filter(function(api) {
-              return api.path === '/notdescribed';
+              return api.path === '/api-doc/notdescribed';
             }).should.be.empty;
             done();
           });
@@ -175,11 +190,33 @@ describe('flair', function() {
 
       it('should only include the base path once', function(done) {
         supertest(flairedApp)
-          .get('/')
+          .get('/api-doc')
           .end(function(err, res) {
             res.body.apis.should.have.length(1);
-            res.body.apis[0].path.should.equal('/pants');
+            res.body.apis[0].path.should.equal('/api-doc/pants');
             done();
+          });
+      });
+    });
+
+    describe('when a route with path params is described', function() {
+      var app = express(), flairedApp;
+
+      app.get(
+        '/pants/:id',
+        flair.describe("getPants", "short pants", "long pants"),
+        function(req, res) {
+          res.send('blah');
+        }
+      );
+      flairedApp = flair.swagger(app);
+
+      it('should describe the route path correctly', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .end(function(err, res) {
+            res.body.apis[0].path.should.equal('/pants/{id}');
+            done(err);
           });
       });
     });

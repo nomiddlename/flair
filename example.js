@@ -1,13 +1,38 @@
 var express = require('express')
 , flair = require('./index')
 , flairui = require('flair-ui')
-, app = express();
+, app = express()
+, cheeses = [
+  { id: 1, name: 'edam' }
+  , { id: 2, name: 'gouda' }
+  , { id: 3, name: 'cheddar' }
+  , { id: 4, name: 'emmental' }
+];
+
+function byId(value) {
+  return function(item) {
+    return item.id === value;
+  };
+}
 
 app.get(
   '/cheese',
   flair.describe("cheeseList", "All cheeses", "Returns all the cheeses"),
   function(req, res) {
-    res.json([ 'edam', 'gouda', 'cheddar', 'emmental' ]);
+    res.json(cheeses);
+  }
+);
+
+app.get(
+  '/cheese/:id',
+  flair.describe("getCheese", "Get cheese", "Returns a single cheese, selected by id"),
+  function(req, res) {
+    var cheese = cheeses.filter(byId(req.param("id")))[0];
+    if (cheese) {
+      res.json(cheese);
+    } else {
+      res.send(404);
+    }
   }
 );
 

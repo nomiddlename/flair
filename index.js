@@ -9,7 +9,7 @@ function api(options, routes) {
   , doc = makeBaseDoc(options)
   , apiPaths = []
   , apis = {}
-  , docPath = (options && options.docPath) || '/';
+  , docPath = (options && options.docPath) || '/api-doc';
 
   routes.forEach(function(route) {
     var base = route.path.split('/')[1]
@@ -41,7 +41,7 @@ function makeApis(docPath, options, apis) {
     , doc = makeBaseDoc(options)
     , apiEntry = { path: path.normalize(path.join(docPath, resPath)), doc: doc };
 
-    doc.resourcePath = "/" + resPath;
+    doc.resourcePath = "/" + resPath.replace(/:(\w+)/g, "{$1}");
     doc.apis = routes.map(routeToApi);
     apiList.push(apiEntry);
   });
@@ -51,7 +51,7 @@ function makeApis(docPath, options, apis) {
 
 function routeToApi(route) {
   var api = { 
-    path: route.path,
+    path: route.path.replace(/:(\w+)/g, "{$1}"),
     description: shortDescription(route),
     operations: [{
       httpMethod: route.method.toUpperCase(),
@@ -110,7 +110,7 @@ function documentedRoutes(app) {
 }
 
 function swagger(appToDocument, options) {
-  if (!(appToDocument && appToDocument.routes)) {
+  if (!(appToDocument && Object.keys(appToDocument.routes).length)) {
     throw new Error("Either you didn't pass in an express app, or that app had no routes defined");
   }
 

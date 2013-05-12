@@ -11,7 +11,7 @@ var express = require('express')
 
 function byId(value) {
   return function(item) {
-    return item.id === value;
+    return item.id == value;
   };
 }
 
@@ -26,6 +26,9 @@ app.get(
 app.get(
   '/cheese/:id',
   flair.describe("getCheese", "Get cheese", "Returns a single cheese, selected by id"),
+  flair.validate([
+    flair.pathParam("id").info("cheese id").integer()
+  ]),
   function(req, res) {
     var cheese = cheeses.filter(byId(req.param("id")))[0];
     if (cheese) {

@@ -1,8 +1,10 @@
 var express = require('express')
+, joi = require('joi')
 , path = require('path');
 
 exports.swagger = swagger;
 exports.describe = describe;
+exports.validate = validate;
 
 function api(options, routes) {
   var docs = []
@@ -56,7 +58,9 @@ function routeToApi(route) {
     operations: [{
       httpMethod: route.method.toUpperCase(),
       notes: longDescription(route),
-      nickname: nickname(route)
+      nickname: nickname(route),
+      parameters: parameters(route),
+      errorResponses: errorResponses(route)
     }]
   };
 
@@ -75,6 +79,14 @@ function findDescription(type, route) {
 
 function nickname(route) {
   return findDescription("nickname", route);
+}
+
+function parameters(route) {
+  return findDescription("params", route);
+}
+
+function errorResponses(route) {
+  return findDescription("errorResponses", route);
 }
 
 function shortDescription(route) {
@@ -135,3 +147,48 @@ function describe(nickname, shortDescription, longDescription) {
   return middleware;
 }
 
+function makeValidator(schema) {
+  return function(req, res, next) {
+    var errors = joi.validate(req.params, schema);
+    if (errors) {
+      res.send(400, { error: errors.message });
+    } else {
+      next();
+    }
+  };
+}
+
+function convertJoiTypesToSwagger(schema) {
+  var params = [];
+  Object.keys(schema).forEach(function(param) {
+    var joiType = schema[param]
+    , swaggerParam = {
+      paramType: joiType.notes || "query",
+      name: param,
+      description: joiType.description
+    };
+
+    if (joiType.__checks.indexOf('integer') >= 0) {
+      swaggerParam.dataType = "integer";
+    }
+
+    if (joiType.notes && joiType.notes === "path") {
+      swaggerParam.required = true;
+      swaggerParam.allowMultiple = false;
+    }
+
+    params.push(swaggerParam);
+  });
+
+  return params;
+}
+
+
+function validate(schema) {
+  var middleware = makeValidator(schema);
+  middleware.params = convertJoiTypesToSwagger(schema);
+  middleware.errorResponses = [
+    { code: 400, reason: "Invalid parameters specified" }
+  ];
+  return middleware;
+}

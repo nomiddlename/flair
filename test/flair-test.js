@@ -1,6 +1,7 @@
 var should = require('should')
 , supertest = require('supertest')
 , express = require('express')
+, joi = require('joi')
 , flair = require('../index')
 ;
 
@@ -205,6 +206,9 @@ describe('flair', function() {
       app.get(
         '/pants/:id',
         flair.describe("getPants", "short pants", "long pants"),
+        flair.validate({
+          id: joi.types.Number().integer().required().notes("path").description("pant id")
+        }),
         function(req, res) {
           res.send('blah');
         }
@@ -216,9 +220,43 @@ describe('flair', function() {
           .get('/api-doc/pants')
           .end(function(err, res) {
             res.body.apis[0].path.should.equal('/pants/{id}');
+            res.body.apis[0].operations[0].parameters.should.have.length(1);
+            res.body.apis[0].operations[0].parameters[0].should.eql({
+              paramType: "path",
+              name: "id",
+              description: "pant id",
+              dataType: "integer",
+              required: true,
+              allowMultiple: false
+            });
             done(err);
           });
       });
+
+      it('should validate the parameters', function(done) {
+        supertest(app)
+          .get('/pants/cheese')
+          .expect(400, { error: "not valid" }, done);
+      });
+
+      it('should allow valid parameters', function(done) {
+        supertest(app)
+          .get('/pants/1')
+          .expect(200, 'blah', done);
+      });
+      
+      it('should add a 400 bad request to the error responses', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .end(function(err, res) {
+            res.body.apis[0].operations[0].errorResponses.should.have.length(1);
+            res.body.apis[0].operations[0].errorResponses[0].code.should.equal(400);
+            res.body.apis[0].operations[0].errorResponses[0].reason.should.equal('Invalid parameters specified');
+            done(err);
+          });
+      });
+      
+      
     });
 
   });

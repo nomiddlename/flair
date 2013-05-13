@@ -1,5 +1,6 @@
 var express = require('express')
 , flair = require('./index')
+, joi = require('joi')
 , flairui = require('flair-ui')
 , app = express()
 , cheeses = [
@@ -23,12 +24,22 @@ app.get(
   }
 );
 
+app.post(
+  '/cheese',
+  flair.describe("createCheese", "Create cheese", "Adds a new cheese to the system"),
+  function(req, res) {
+    var newCheese = req.body;
+    cheeses.push(newCheese);
+    res.send(201);
+  }
+);
+
 app.get(
   '/cheese/:id',
   flair.describe("getCheese", "Get cheese", "Returns a single cheese, selected by id"),
-  flair.validate([
-    flair.pathParam("id").info("cheese id").integer()
-  ]),
+  flair.validate({
+    id: joi.types.Number().integer().required().notes("path").description("cheese id")
+  }),
   function(req, res) {
     var cheese = cheeses.filter(byId(req.param("id")))[0];
     if (cheese) {
@@ -38,6 +49,24 @@ app.get(
     }
   }
 );
+
+app.put(
+  '/cheese/:id',
+  flair.describe("updateCheese", "Update cheese", "Update an existing cheese"),
+  flair.validate({
+    id: joi.types.Number().integer().required().notes("path").description("cheese id")
+  }),
+  function(req, res) {
+    var cheese = cheeses.filter(byId(req.param("id")))[0];
+    if (cheese) {
+      cheese.name = req.body.name;
+      res.json(cheese);
+    } else {
+      res.send(404);
+    }
+  }
+);
+    
 
 app.use(flair.swagger(app, { 
   docPath: '/api-docs', 

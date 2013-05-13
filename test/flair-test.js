@@ -256,7 +256,43 @@ describe('flair', function() {
           });
       });
       
+    });
+
+    describe('when an app with multiple operations on a resource is described', function() {
+      var app = express(), flairedApp;
       
+      app.get(
+        '/pants/:id',
+        flair.describe("getPants", "short pants", "long pants"),
+        flair.validate({
+          id: joi.types.Number().integer().required().notes("path").description("pant id")
+        }),
+        function(req, res) {
+          res.send('blah');
+        }
+      );
+      app.put(
+        '/pants/:id',
+        flair.describe("updatePants", "short pants", "long pants"),
+        flair.validate({
+          id: joi.types.Number().integer().required().notes("path").description("pant id")
+        }),
+        function(req, res) {
+          res.send('blah too');
+        }
+      );
+      flairedApp = flair.swagger(app);
+
+      it('should group the operations under the resource path', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .end(function(err, res) {
+            res.body.apis[0].operations.should.have.length(2);
+            res.body.apis[0].operations[1].httpMethod.should.equal("PUT");
+            res.body.apis[0].operations[1].nickname.should.equal("updatePants");
+            done(err);
+          });
+      });
     });
 
   });

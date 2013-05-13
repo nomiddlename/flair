@@ -36,6 +36,10 @@ function api(options, routes) {
   return docs.concat(makeApis(docPath, options, apis)); 
 }
 
+function byPath(a, b) {
+  return a.path.localeCompare(b.path);
+}
+
 function makeApis(docPath, options, apis) {
   var apiList = [];
   Object.keys(apis).forEach(function(resPath) {
@@ -44,7 +48,15 @@ function makeApis(docPath, options, apis) {
     , apiEntry = { path: path.normalize(path.join(docPath, resPath)), doc: doc };
 
     doc.resourcePath = "/" + resPath.replace(/:(\w+)/g, "{$1}");
-    doc.apis = routes.map(routeToApi);
+    doc.apis = routes.map(routeToApi).sort(byPath).reduce(function(accum, current) {
+      var previous = accum[accum.length - 1];
+      if (previous && previous.path === current.path) {
+        previous.operations = previous.operations.concat(current.operations);        
+      } else {
+        accum.push(current);
+      }
+      return accum;
+    }, []);
     apiList.push(apiEntry);
   });
 

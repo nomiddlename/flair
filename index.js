@@ -1,10 +1,17 @@
 var express = require('express')
 , joi = require('joi')
-, path = require('path');
+, jsv = require('JSV').JSV.createEnvironment()
+, path = require('path')
+, contentTypes = {};
 
 exports.swagger = swagger;
 exports.describe = describe;
 exports.validate = validate;
+exports.consumes = consumes;
+exports.produces = produces;
+exports.addContentType = addContentType;
+exports.clearContentTypes = clearContentTypes;
+exports.jsonBodyParser = jsonBodyParser;
 
 function api(options, routes) {
   var docs = []
@@ -72,7 +79,9 @@ function routeToApi(route) {
       notes: longDescription(route),
       nickname: nickname(route),
       parameters: parameters(route),
-      errorResponses: errorResponses(route)
+      errorResponses: errorResponses(route),
+      consumes: consumesArray(route),
+      produces: producesArray(route)
     }]
   };
 
@@ -80,13 +89,27 @@ function routeToApi(route) {
 }
 
 function findDescription(type, route) {
- var desc = "";
+  return find(type, route, "");
+}
+
+function findArray(type, route) {
+  var result = [];
   route.callbacks.forEach(function(cb) {
     if (cb[type]) {
-      desc = cb[type];
+      result = result.concat(cb[type]);
     }
   });
-  return desc;
+  return result;
+}
+
+function find(type, route, defaultValue) {
+  var result = defaultValue;
+  route.callbacks.forEach(function(cb) {
+    if (cb[type]) {
+      result = cb[type];
+    }
+  });
+  return result;
 }
 
 function nickname(route) {
@@ -94,11 +117,11 @@ function nickname(route) {
 }
 
 function parameters(route) {
-  return findDescription("params", route);
+  return findArray("params", route);
 }
 
 function errorResponses(route) {
-  return findDescription("errorResponses", route);
+  return findArray("errorResponses", route);
 }
 
 function shortDescription(route) {
@@ -107,6 +130,14 @@ function shortDescription(route) {
 
 function longDescription(route) {
   return findDescription("longDescription", route);
+}
+
+function consumesArray(route) {
+  return findArray("consumes", route);
+}
+
+function producesArray(route) {
+  return findArray("produces", route);
 }
   
 function makeBaseDoc(options) {
@@ -203,4 +234,117 @@ function validate(schema) {
     { code: 400, reason: "Invalid parameters specified" }
   ];
   return middleware;
+}
+
+function consumes() {
+  var types = Array.prototype.slice.call(arguments)
+  , middleware = function(req, res, next) {
+
+    if (types.indexOf(req.header('content-type')) > -1) {
+      if (contentTypes[req.header('content-type')]) {
+        if (!req.body) {
+          return next(new Error("Missing req.body for " + req.path));
+        }
+        var report = jsv.validate(
+          req.body, 
+          contentTypes[req.header('content-type')]
+        );
+        if (report.errors.length > 0) {
+          res.send(400, { 
+            error: 'Body does not match schema for ' + req.header('content-type'), 
+            errors: report.errors 
+          });
+          return;
+        }
+      }
+      next();
+    } else {
+      res.send(400, { error: 'Invalid content-type' });
+    }
+  };
+
+  middleware.consumes = types;
+  middleware.params = [{
+    paramType: "header",
+    name: "Content-Type",
+    description: "The format of the request body",
+    dataType: "string",
+    required: true,
+    allowMultiple: false,
+    allowableValues: {
+      valueType: "LIST",
+      values: types
+    }
+  }];
+  middleware.errorResponses = [
+    { code: 400, reason: "Invalid content-type" }
+  ];
+  return middleware;
+}
+
+function produces() {
+  var types = Array.prototype.slice.call(arguments)
+  , middleware = function(req, res, next) {
+    next();
+  };
+
+  middleware.produces = types;
+  return middleware;
+}
+
+function addContentType(type, schema) {
+  contentTypes[type] = schema;
+}
+
+function clearContentTypes() {
+  contentTypes = {};
+}
+
+//Does the same as express.bodyParser, just for content types other
+//than application/json. Will be used for any mime type that is
+//"application/<something>+json". Can (and should) be used in addition
+//to express.bodyParser
+function jsonBodyParser() {
+  function hasBody(req) {
+    return 'transfer-encoding' in req.headers || 'content-length' in req.headers;
+  }
+
+  function mime(req) {
+    var str = req.headers['content-type'] || '';
+    return str.split(';')[0];
+  }
+
+  return function(req, res, next) {
+    if (req._body) return next();
+    req.body = req.body || {};
+    
+    if (!hasBody(req)) return next();
+
+    // check Content-Type
+    if (!/application\/.*\+json/.test(mime(req))) return next();
+
+    // flag as parsed
+    req._body = true;
+
+    // parse
+    var buf = '';
+    req.setEncoding('utf8');
+    req.on('data', function(chunk){ buf += chunk });
+    req.on('end', function(){
+      var first = buf.trim()[0];
+      
+      if (0 == buf.length) {
+        return next({ code: 400, msg: 'invalid json, empty body' });
+      }
+        
+      try {
+        req.body = JSON.parse(buf);
+      } catch (err){
+        err.body = buf;
+        err.status = 400;
+        return next(err);
+      }
+      next();
+    });
+  };
 }

@@ -19,6 +19,7 @@ function byId(value) {
 app.get(
   '/cheese',
   flair.describe("cheeseList", "All cheeses", "Returns all the cheeses"),
+  flair.produces("application/json"),
   function(req, res) {
     res.json(cheeses);
   }
@@ -27,6 +28,7 @@ app.get(
 app.post(
   '/cheese',
   flair.describe("createCheese", "Create cheese", "Adds a new cheese to the system"),
+  flair.consumes("application/json"),
   function(req, res) {
     var newCheese = req.body;
     cheeses.push(newCheese);
@@ -67,7 +69,6 @@ app.put(
   }
 );
     
-
 app.use(flair.swagger(app, { 
   docPath: '/api-docs', 
   basePath: "http://localhost:3000/", 

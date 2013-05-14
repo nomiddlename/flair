@@ -295,5 +295,154 @@ describe('flair', function() {
       });
     });
 
+    describe('when an app with a content type is described', function() {
+      var app = express(), flairedApp;
+
+      app.post(
+        '/pants',
+        flair.describe("newPants", "short pants", "long pants"),
+        flair.consumes("application/vnd.pants+json", "application/vnd.pants2+json"),
+        flair.produces("application/vnd.pants+json"),
+        function(req, res) {
+          res.json({id: 1, name: "pants"});
+        }
+      );
+      flairedApp = flair.swagger(app);
+
+      it('should return 400 for an invalid content-type request header', function(done) {
+        supertest(app)
+          .post('/pants')
+          .set('Content-Type', 'application/json')
+          .expect(400, done);
+      });
+
+      it('should accept valid content-type request headers', function(done) {
+        supertest(app)
+          .post('/pants')
+          .set('Content-Type', 'application/vnd.pants+json')
+          .expect(200, function() {
+            supertest(app)
+              .post('/pants')
+              .set('Content-Type', 'application/vnd.pants2+json')
+              .expect(200, done);
+          });
+      });
+      
+      it('should set the consumes value of the operation', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].consumes.should.have.length(2);
+            res.body.apis[0].operations[0].consumes.should.include('application/vnd.pants+json');
+            res.body.apis[0].operations[0].consumes.should.include('application/vnd.pants2+json');
+            done(err);
+          });
+      });
+
+      it('should add the content-type headers to the parameters of the operation', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].parameters.should.have.length(1);
+            res.body.apis[0].operations[0].parameters[0].should.eql({
+              paramType: "header",
+              name: "Content-Type",
+              description: "The format of the request body",
+              dataType: "string",
+              required: true,
+              allowMultiple: false,
+              allowableValues: {
+                valueType: "LIST",
+                values: [
+                  "application/vnd.pants+json", "application/vnd.pants2+json"
+                ]
+              }
+            });
+            done(err);
+          });
+      });
+
+      it('should set the produces value of the operation', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].produces.should.have.length(1);
+            res.body.apis[0].operations[0].produces[0].should.equal('application/vnd.pants+json');
+            done(err);
+          });
+      });
+
+      it('should add a 400 bad request to the errorResponses', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].errorResponses.should.have.length(1);
+            res.body.apis[0].operations[0].errorResponses[0].should.eql({ code: 400, reason: 'Invalid content-type' });
+            done(err);
+          });
+      });
+    });
+
+    describe('when an app with a body schema is described', function() {
+      var app = express(), flairedApp;
+
+      flair.addContentType(
+        "application/vnd.thing+json",
+        {
+          id: "thing",
+          type: "object",
+          properties: {
+            name: {
+              description: "the name of the pant",
+              type: "string",
+              required: true
+            },
+            id: {
+              description: "the id of the pant",
+              type: "integer",
+              required: true
+            }
+          },
+          //you need this here, otherwise null and undefined are valid
+          required: true
+        }
+      );
+      
+      app.use(flair.jsonBodyParser());
+      app.post(
+        '/pants',
+        flair.describe("newPants", "short pants", "long pants"),
+        flair.consumes("application/vnd.thing+json"),
+        function(req, res) {
+          res.json({id: 1, name: "pants"});
+        }
+      );
+      flairedApp = flair.swagger(app);
+
+      it('should complain about invalid bodies', function(done) {
+        supertest(app)
+          .post('/pants')
+          .set('Content-Type', 'application/vnd.thing+json')
+          //.set('Content-Length', JSON.stringify({ cheese: 3, name: "lumpy" }).length)
+          .send(JSON.stringify({ cheese: 3, name: "lumpy" }))
+          .expect(400, done);
+      });
+
+      it('should accept valid bodies', function(done) {
+        supertest(app)
+          .post('/pants')
+          .set('Content-Type', 'application/vnd.thing+json')
+          //.set('Content-Length', JSON.stringify({ id: 4, name: "lumpy" }).length)
+          .send(JSON.stringify({ id: 4, name: "lumpy" }))
+          .expect(200, done);
+      });
+
+      it('should include the schema in the models section of the api');
+      
+      it('should specify the responseClass in the operation section of the api');
+
+      it('should add a 400 bad request to the errorResponses');
+    });
+
   });
 });

@@ -46,7 +46,7 @@ flair.addContentType(
   "application/vnd.cheese-list+json",
   {
     id: "cheeseList",
-    type: "array",
+    type: "Array",
     items: { 
       //this reference will work in swagger, but not
       //real json-schema

@@ -198,7 +198,7 @@ function swagger(appToDocument, options) {
 }
 
 function describe(nickname, shortDescription, longDescription) {
-  var middleware = function(req, res, next) { next(); };
+  var middleware = function describeMiddleware(req, res, next) { next(); };
   middleware.nickname = nickname;
   middleware.shortDescription = shortDescription;
   middleware.longDescription = longDescription;
@@ -207,7 +207,7 @@ function describe(nickname, shortDescription, longDescription) {
 }
 
 function makeValidator(schema) {
-  return function(req, res, next) {
+  return function paramValidator(req, res, next) {
     var errors = joi.validate(req.params, schema);
     if (errors) {
       res.send(400, { error: errors.message });
@@ -254,7 +254,7 @@ function validate(schema) {
 
 function consumes() {
   var types = Array.prototype.slice.call(arguments)
-  , middleware = function(req, res, next) {
+  , middleware = function consumesMiddleware(req, res, next) {
 
     if (types.indexOf(req.header('content-type')) > -1) {
       if (contentTypes[req.header('content-type')]) {
@@ -293,6 +293,9 @@ function consumes() {
     }
   }];
   middleware.models = [];
+  middleware.errorResponses = [
+    { code: 400, reason: "Invalid content-type" }
+  ];
   types.forEach(function(type) {
     if (contentTypes[type]) {
       middleware.params.push({
@@ -303,6 +306,10 @@ function consumes() {
         allowMultiple: false
       });
       middleware.models.push(contentTypes[type]);
+      middleware.errorResponses.push({
+        code: 400,
+        reason: "Body does not match schema for " + type
+      });
     } else {
       middleware.params.push({
         paramType: "body",
@@ -313,21 +320,20 @@ function consumes() {
       });
     }
   });
-  middleware.errorResponses = [
-    { code: 400, reason: "Invalid content-type" }
-  ];
   return middleware;
 }
 
 function produces() {
   var types = Array.prototype.slice.call(arguments)
-  , middleware = function(req, res, next) {
+  , middleware = function producesMiddleware(req, res, next) {
     next();
   };
 
   middleware.produces = types;
+  middleware.models = [];
   types.forEach(function(type) {
     if (contentTypes[type]) {
+      middleware.models.push(contentTypes[type]);
       middleware.responseClass = contentTypes[type].id;
     }
   });
@@ -356,7 +362,7 @@ function jsonBodyParser() {
     return str.split(';')[0];
   }
 
-  return function(req, res, next) {
+  return function jsonBodyMiddleware(req, res, next) {
     if (req._body) return next();
     req.body = req.body || {};
     

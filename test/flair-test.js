@@ -301,8 +301,8 @@ describe('flair', function() {
       app.post(
         '/pants',
         flair.describe("newPants", "short pants", "long pants"),
-        flair.consumes("application/vnd.pants+json", "application/vnd.pants2+json"),
-        flair.produces("application/vnd.pants+json"),
+        flair.consumes("application/vnd.custom+json", "application/vnd.custom2+json"),
+        flair.produces("application/vnd.custom+json"),
         function(req, res) {
           res.json({id: 1, name: "pants"});
         }
@@ -319,12 +319,16 @@ describe('flair', function() {
       it('should accept valid content-type request headers', function(done) {
         supertest(app)
           .post('/pants')
-          .set('Content-Type', 'application/vnd.pants+json')
-          .expect(200, function() {
-            supertest(app)
-              .post('/pants')
-              .set('Content-Type', 'application/vnd.pants2+json')
-              .expect(200, done);
+          .set('Content-Type', 'application/vnd.custom+json')
+          .expect(200, function(err, res) {
+            if (err) {
+              done(err);
+            } else {
+              supertest(app)
+                .post('/pants')
+                .set('Content-Type', 'application/vnd.custom2+json')
+                .expect(200, done);
+            }
           });
       });
       
@@ -333,8 +337,8 @@ describe('flair', function() {
           .get('/api-doc/pants')
           .expect(200, function(err, res) {
             res.body.apis[0].operations[0].consumes.should.have.length(2);
-            res.body.apis[0].operations[0].consumes.should.include('application/vnd.pants+json');
-            res.body.apis[0].operations[0].consumes.should.include('application/vnd.pants2+json');
+            res.body.apis[0].operations[0].consumes.should.include('application/vnd.custom+json');
+            res.body.apis[0].operations[0].consumes.should.include('application/vnd.custom2+json');
             done(err);
           });
       });
@@ -353,7 +357,7 @@ describe('flair', function() {
               allowableValues: {
                 valueType: "LIST",
                 values: [
-                  "application/vnd.pants+json", "application/vnd.pants2+json"
+                  "application/vnd.custom+json", "application/vnd.custom2+json"
                 ]
               }
             });
@@ -367,14 +371,14 @@ describe('flair', function() {
           .expect(200, function(err, res) {
             res.body.apis[0].operations[0].parameters.should.includeEql({
               paramType: "body",
-              description: "Request body (application/vnd.pants+json)",
+              description: "Request body (application/vnd.custom+json)",
               dataType: "string",
               required: false,
               allowMultiple: false
             });
             res.body.apis[0].operations[0].parameters.should.includeEql({
               paramType: "body",
-              description: "Request body (application/vnd.pants2+json)",
+              description: "Request body (application/vnd.custom2+json)",
               dataType: "string",
               required: false,
               allowMultiple: false
@@ -388,7 +392,7 @@ describe('flair', function() {
           .get('/api-doc/pants')
           .expect(200, function(err, res) {
             res.body.apis[0].operations[0].produces.should.have.length(1);
-            res.body.apis[0].operations[0].produces[0].should.equal('application/vnd.pants+json');
+            res.body.apis[0].operations[0].produces[0].should.equal('application/vnd.custom+json');
             done(err);
           });
       });
@@ -495,9 +499,13 @@ describe('flair', function() {
         supertest(flairedApp)
           .get('/api-doc/pants')
           .expect(200, function(err, res) {
-            res.body.apis[0].operations[0].errorResponses.should.have.length(1);
-            res.body.apis[0].operations[0].errorResponses[0].code.should.eql(400);
-            res.body.apis[0].operations[0].errorResponses[0].reason.should.eql("Invalid content-type");
+            res.body.apis[0].operations[0].errorResponses.should.have.length(2);
+            res.body.apis[0].operations[0].errorResponses.should.includeEql(
+              { code: 400, reason: "Invalid content-type" }
+            );
+            res.body.apis[0].operations[0].errorResponses.should.includeEql(
+              { code: 400, reason: "Body does not match schema for application/vnd.thing+json" }
+            );
             done(err);
           });
       });
@@ -505,8 +513,59 @@ describe('flair', function() {
 
     describe('when an app with an output schema is described', function() {
 
-      it('should add the schema to the models');
-      it('should add a produces value to the operation');
+      var app = express(), flairedApp;
+
+      flair.addContentType(
+        "application/vnd.pants+json",
+        {
+          id: "pants",
+          type: "object",
+          properties: {
+            pants: {
+              type: "string"
+            }
+          }
+        }
+      );
+
+      app.get(
+        '/pants',
+        flair.describe("getPants", "short desc", "long desc"),
+        flair.produces("application/vnd.pants+json"),
+        function(req, res) {
+          res.header('Content-Type', 'application/vnd.pants+json');
+          res.json({ pants: "pants" });
+        }
+      );
+      flairedApp = flair.swagger(app);
+
+      it('should add the schema to the models', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.models.should.have.property("pants");
+            done(err);
+          });
+      });
+
+      it('should add a responseClass to the operation', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].responseClass.should.equal("pants");
+            done(err);
+          });
+      });
+
+      it('should add a produces value to the operation', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].produces.should.have.length(1);
+            res.body.apis[0].operations[0].produces.should.includeEql("application/vnd.pants+json");
+            done(err);
+          });
+      });
     });
 
   });

@@ -64,6 +64,13 @@ function makeApis(docPath, options, apis) {
       }
       return accum;
     }, []);
+    doc.models = {};
+    routes
+      .map(models) //convert to array of models
+      .reduce(function(a,b) { return a.concat(b); }, []) //flatten
+      .forEach(function(model) {
+        doc.models[model.id] = model;
+      });
     apiList.push(apiEntry);
   });
 
@@ -81,7 +88,8 @@ function routeToApi(route) {
       parameters: parameters(route),
       errorResponses: errorResponses(route),
       consumes: consumesArray(route),
-      produces: producesArray(route)
+      produces: producesArray(route),
+      responseClass: responseClass(route)
     }]
   };
 
@@ -110,6 +118,14 @@ function find(type, route, defaultValue) {
     }
   });
   return result;
+}
+
+function models(route) {
+  return findArray("models", route);
+}
+
+function responseClass(route) {
+  return findDescription("responseClass", route);
 }
 
 function nickname(route) {
@@ -276,6 +292,27 @@ function consumes() {
       values: types
     }
   }];
+  middleware.models = [];
+  types.forEach(function(type) {
+    if (contentTypes[type]) {
+      middleware.params.push({
+        paramType: "body",
+        description: "Request body (" + type + ")",
+        dataType: contentTypes[type].id,
+        required: true,
+        allowMultiple: false
+      });
+      middleware.models.push(contentTypes[type]);
+    } else {
+      middleware.params.push({
+        paramType: "body",
+        description: "Request body (" + type + ")",
+        dataType: "string",
+        required: false,
+        allowMultiple: false
+      });
+    }
+  });
   middleware.errorResponses = [
     { code: 400, reason: "Invalid content-type" }
   ];
@@ -289,6 +326,11 @@ function produces() {
   };
 
   middleware.produces = types;
+  types.forEach(function(type) {
+    if (contentTypes[type]) {
+      middleware.responseClass = contentTypes[type].id;
+    }
+  });
   return middleware;
 }
 

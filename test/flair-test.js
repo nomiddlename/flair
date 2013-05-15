@@ -343,8 +343,7 @@ describe('flair', function() {
         supertest(flairedApp)
           .get('/api-doc/pants')
           .expect(200, function(err, res) {
-            res.body.apis[0].operations[0].parameters.should.have.length(1);
-            res.body.apis[0].operations[0].parameters[0].should.eql({
+            res.body.apis[0].operations[0].parameters.should.includeEql({
               paramType: "header",
               name: "Content-Type",
               description: "The format of the request body",
@@ -357,6 +356,28 @@ describe('flair', function() {
                   "application/vnd.pants+json", "application/vnd.pants2+json"
                 ]
               }
+            });
+            done(err);
+          });
+      });
+
+      it('should add a body parameter for each value of consumes', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].parameters.should.includeEql({
+              paramType: "body",
+              description: "Request body (application/vnd.pants+json)",
+              dataType: "string",
+              required: false,
+              allowMultiple: false
+            });
+            res.body.apis[0].operations[0].parameters.should.includeEql({
+              paramType: "body",
+              description: "Request body (application/vnd.pants2+json)",
+              dataType: "string",
+              required: false,
+              allowMultiple: false
             });
             done(err);
           });
@@ -423,7 +444,6 @@ describe('flair', function() {
         supertest(app)
           .post('/pants')
           .set('Content-Type', 'application/vnd.thing+json')
-          //.set('Content-Length', JSON.stringify({ cheese: 3, name: "lumpy" }).length)
           .send(JSON.stringify({ cheese: 3, name: "lumpy" }))
           .expect(400, done);
       });
@@ -432,16 +452,61 @@ describe('flair', function() {
         supertest(app)
           .post('/pants')
           .set('Content-Type', 'application/vnd.thing+json')
-          //.set('Content-Length', JSON.stringify({ id: 4, name: "lumpy" }).length)
           .send(JSON.stringify({ id: 4, name: "lumpy" }))
           .expect(200, done);
       });
 
-      it('should include the schema in the models section of the api');
-      
-      it('should specify the responseClass in the operation section of the api');
+      it('should include the schema in the models section of the api', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.models.should.have.property("thing");
+            res.body.models.thing.id.should.eql("thing");
+            done(err);
+          });
+      });
 
-      it('should add a 400 bad request to the errorResponses');
+      it('should add a body parameter to the parameters for the operation', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].parameters.should.have.length(2);
+            res.body.apis[0].operations[0].parameters.should.includeEql({
+              paramType: "body",
+              description: "Request body (application/vnd.thing+json)",
+              dataType: "thing",
+              required: true,
+              allowMultiple: false
+            });
+            done(err);
+          });
+      });
+      
+      it('should not specify the responseClass in the operation section of the api', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].responseClass.should.be.empty;
+            done(err);
+          });
+      });
+
+      it('should add a 400 bad request to the errorResponses', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/pants')
+          .expect(200, function(err, res) {
+            res.body.apis[0].operations[0].errorResponses.should.have.length(1);
+            res.body.apis[0].operations[0].errorResponses[0].code.should.eql(400);
+            res.body.apis[0].operations[0].errorResponses[0].reason.should.eql("Invalid content-type");
+            done(err);
+          });
+      });
+    });
+
+    describe('when an app with an output schema is described', function() {
+
+      it('should add the schema to the models');
+      it('should add a produces value to the operation');
     });
 
   });

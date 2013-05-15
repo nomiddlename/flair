@@ -379,10 +379,12 @@ function jsonBodyParser() {
     req.setEncoding('utf8');
     req.on('data', function(chunk){ buf += chunk });
     req.on('end', function(){
-      var first = buf.trim()[0];
+      buf = buf.trim();
       
       if (0 == buf.length) {
-        return next({ code: 400, msg: 'invalid json, empty body' });
+        var error = new Error("Invalid json, empty body");
+        error.status = 400;
+        return next(error);
       }
         
       try {

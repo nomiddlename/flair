@@ -326,6 +326,7 @@ function consumes() {
 function produces() {
   var types = Array.prototype.slice.call(arguments)
   , middleware = function producesMiddleware(req, res, next) {
+    res.set('content-type', types[0]);
     next();
   };
 

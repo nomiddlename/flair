@@ -533,7 +533,6 @@ describe('flair', function() {
         flair.describe("getPants", "short desc", "long desc"),
         flair.produces("application/vnd.pants+json"),
         function(req, res) {
-          res.header('Content-Type', 'application/vnd.pants+json');
           res.json({ pants: "pants" });
         }
       );
@@ -566,6 +565,14 @@ describe('flair', function() {
             done(err);
           });
       });
+
+      it('should set the content-type of the response', function(done) {
+        supertest(app)
+          .get('/pants')
+          .expect('Content-Type', 'application/vnd.pants+json')
+          .expect(200, done);
+      });
+
     });
 
   });

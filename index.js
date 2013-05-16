@@ -12,6 +12,7 @@ exports.produces = produces;
 exports.addContentType = addContentType;
 exports.clearContentTypes = clearContentTypes;
 exports.jsonBodyParser = jsonBodyParser;
+exports.joi = joi;
 
 function api(options, routes) {
   var docs = []

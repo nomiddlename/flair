@@ -1,6 +1,6 @@
 {
   "name": "flair-doc",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Swagger-compliant REST API documentation generator",
   "main": "index.js",
   "scripts": {

@@ -225,7 +225,7 @@ describe('flair', function() {
               paramType: "path",
               name: "id",
               description: "pant id",
-              dataType: "integer",
+              dataType: "int",
               required: true,
               allowMultiple: false
             });

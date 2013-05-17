@@ -218,21 +218,61 @@ function makeValidator(schema) {
   };
 }
 
+function minOrMax(swagger, joiType, index, minOrMax) {
+  swagger.allowableValues = swagger.allowableValues || {};
+  swagger.allowableValues.valueType = "RANGE";
+  swagger.allowableValues[minOrMax] = joiType.__args[index][0];
+}
+
+var converters = {
+  "float": function(swagger) { swagger.dataType = "double"; },
+  "integer": function(swagger) { swagger.dataType = "int"; },
+  "date": function(swagger) { swagger.dataType = "Date"; },
+  "min": minOrMax,
+  "max": minOrMax
+};
+
 function convertJoiTypesToSwagger(schema) {
   var params = [];
   Object.keys(schema).forEach(function(param) {
     var joiType = schema[param]
     , swaggerParam = {
-      paramType: joiType.notes || "query",
+      paramType: (typeof joiType.notes == 'string' ? joiType.notes : "query"),
       name: param,
-      description: joiType.description
+      description: (typeof joiType.description == 'string' ? joiType.description : "")
     };
 
-    if (joiType.__checks.indexOf('integer') >= 0) {
-      swaggerParam.dataType = "integer";
+
+    if (joiType.type === "String") {
+      swaggerParam.dataType = "string";
     }
 
-    if (joiType.notes && joiType.notes === "path") {
+    if (joiType.type === "Boolean") {
+      swaggerParam.dataType = "boolean";
+    }
+
+    joiType.__checks.forEach(function(check, index) {
+      if (converters[check]) {
+        converters[check](swaggerParam, joiType, index, check);
+      }
+    });
+
+    if (joiType.__valids._values.indexOf(undefined) > -1) {
+      swaggerParam.required = false;
+    }
+
+    joiType.__valids._values.forEach(function(validValue) {
+      if (validValue !== undefined) {
+        swaggerParam.allowableValues = swaggerParam.allowableValues || {};
+        swaggerParam.allowableValues.valueType = "LIST";
+        swaggerParam.allowableValues.values = swaggerParam.allowableValues.values || [];
+        swaggerParam.allowableValues.values.push(validValue);
+      }
+    });
+
+    swaggerParam.required = (joiType.__modifiers._values.indexOf("required") > -1);
+
+    if (swaggerParam.paramType !== "query") {
       swaggerParam.required = true;
       swaggerParam.allowMultiple = false;
     }

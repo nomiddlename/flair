@@ -611,7 +611,7 @@ describe('flair', function() {
         '/blah',
         flair.consumes("application/vnd.something+json"),
         function(req, res) {
-          res.send("Yay!");
+          res.send("Yay! " + req.mime);
         }
       );
 
@@ -628,6 +628,16 @@ describe('flair', function() {
                 .set('Content-Type', 'application/vnd.wrong+json; charset=utf-8')
                 .expect(400, done);
             }
+          });
+      });
+
+      it('should add mime to the request', function(done) {
+        supertest(app)
+          .post('/blah')
+          .set('Content-Type', 'application/vnd.something+json; charset=utf-8')
+          .expect(200, function(err, res) {
+            res.text.should.include('application/vnd.something+json');
+            done(err);
           });
       });
     });

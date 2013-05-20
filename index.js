@@ -317,6 +317,9 @@ function consumes() {
           return;
         }
       }
+      if (!req.mime) {
+        req.mime = mime;
+      }
       next();
     } else {
       res.send(400, { error: 'Invalid content-type' });

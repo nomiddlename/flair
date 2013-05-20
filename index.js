@@ -10,6 +10,7 @@ exports.validate = validate;
 exports.consumes = consumes;
 exports.produces = produces;
 exports.addContentType = addContentType;
+exports.addContentTypes = addContentTypes;
 exports.clearContentTypes = clearContentTypes;
 exports.jsonBodyParser = jsonBodyParser;
 exports.joi = joi;
@@ -384,6 +385,12 @@ function produces() {
 
 function addContentType(type, schema) {
   contentTypes[type] = schema;
+}
+
+function addContentTypes(list) {
+  list.forEach(function(thing) {
+    addContentType(thing.type, thing.schema);
+  });
 }
 
 function clearContentTypes() {

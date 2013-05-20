@@ -575,5 +575,35 @@ describe('flair', function() {
 
     });
 
+    describe('#addContentTypes', function() {
+
+      flair.addContentTypes([
+        { type: "application/vnd.made-up-schema+json", schema: { id: "MadeUp", required: true } },
+        { type: "application/vnd.blah-blah+json", schema: { id: "Blah", required: true } }
+      ]);
+
+      var app = express(), flairedApp;
+      app.post(
+        '/blah',
+        flair.describe("blah", "blah", "blah"),
+        flair.consumes("application/vnd.made-up-schema+json"),
+        flair.produces("application/vnd.blah-blah+json"),
+        function(req, res) {
+          res.send("Yay!");
+        }
+      );
+      flairedApp = flair.swagger(app);
+
+      it('should accept an array of objects with type and schema properties', function(done) {
+        supertest(flairedApp)
+          .get('/api-doc/blah')
+          .expect(200, function(err, res) {
+            res.body.models.should.have.property("Blah");
+            res.body.models.should.have.property("MadeUp");
+            done(err);
+          });
+      });
+    });
+
   });
 });

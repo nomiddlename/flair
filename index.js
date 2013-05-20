@@ -298,18 +298,20 @@ function consumes() {
   var types = Array.prototype.slice.call(arguments)
   , middleware = function consumesMiddleware(req, res, next) {
 
-    if (types.indexOf(req.header('content-type')) > -1) {
-      if (contentTypes[req.header('content-type')]) {
+    var mime = req.header('content-type').split(';')[0];
+
+    if (types.indexOf(mime) > -1) {
+      if (contentTypes[mime]) {
         if (!req.body) {
           return next(new Error("Missing req.body for " + req.path));
         }
         var report = jsv.validate(
           req.body, 
-          contentTypes[req.header('content-type')]
+          contentTypes[mime]
         );
         if (report.errors.length > 0) {
           res.send(400, { 
-            error: 'Body does not match schema for ' + req.header('content-type'), 
+            error: 'Body does not match schema for ' + mime, 
             errors: report.errors 
           });
           return;

@@ -605,5 +605,31 @@ describe('flair', function() {
       });
     });
 
+    describe('#consumes', function() {
+      var app = express();
+      app.post(
+        '/blah',
+        flair.consumes("application/vnd.something+json"),
+        function(req, res) {
+          res.send("Yay!");
+        }
+      );
+
+      it('should handle request content-types with extra information', function(done) {
+        supertest(app)
+          .post('/blah')
+          .set('Content-Type', 'application/vnd.something+json; charset=utf-8')
+          .expect(200, function(err, res) {
+            if (err) {
+              done(err);
+            } else {
+              supertest(app)
+                .post('/blah')
+                .set('Content-Type', 'application/vnd.wrong+json; charset=utf-8')
+                .expect(400, done);
+            }
+          });
+      });
+    });
   });
 });

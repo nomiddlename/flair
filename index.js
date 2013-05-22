@@ -208,15 +208,55 @@ function describe(nickname, shortDescription, longDescription) {
   return middleware;
 }
 
-function makeValidator(schema) {
+function makeValidator(originalSchema) {
+  var schema = convertHeadersToLowerCase(originalSchema);
+
   return function paramValidator(req, res, next) {
-    var errors = joi.validate(req.params, schema);
+    var errors = joi.validate(
+      onlySchemaFields(merge(req.params, req.query, req.headers), schema), 
+      schema
+    );
     if (errors) {
-      res.send(400, { error: errors.message });
+      res.send(400, { error: errors.message, details: "http://www.youtube.com/watch?v=WOdjCb4LwQY" });
     } else {
       next();
     }
   };
+}
+
+function convertHeadersToLowerCase(schema) {
+  var converted = copyProperties({}, schema);
+  Object.keys(converted).forEach(function(key) {
+    var joiType = schema[key];
+    if (joiType.notes === 'header') {
+      if (key !== key.toLowerCase()) {
+        converted[key.toLowerCase()] = joiType;
+        delete converted[key];
+      }
+    }
+  });
+  return converted;
+}
+
+function onlySchemaFields(obj, schema) {
+  Object.keys(obj).forEach(function(key) {
+    if (!schema.hasOwnProperty(key)) {
+      delete obj[key];
+    }
+  });
+  return obj;
+}
+
+function copyProperties(dest, source) {
+  Object.keys(source).forEach(function(property) {
+    dest[property] = source[property];
+  });
+  return dest;
+}
+
+function merge() {
+  var toMerge = Array.prototype.slice.call(arguments);
+  return toMerge.reduce(copyProperties, {});
 }
 
 function minOrMax(swagger, joiType, index, minOrMax) {
@@ -242,7 +282,6 @@ function convertJoiTypesToSwagger(schema) {
       name: param,
       description: (typeof joiType.description == 'string' ? joiType.description : "")
     };
-
 
     if (joiType.type === "String") {
       swaggerParam.dataType = "string";
@@ -284,9 +323,8 @@ function convertJoiTypesToSwagger(schema) {
   return params;
 }
 
-
 function validate(schema) {
-  var middleware = makeValidator(schema);
+  var middleware = makeValidator(convertHeadersToLowerCase(schema));
   middleware.params = convertJoiTypesToSwagger(schema);
   middleware.errorResponses = [
     { code: 400, reason: "Invalid parameters specified" }

@@ -236,7 +236,10 @@ describe('flair', function() {
       it('should validate the parameters', function(done) {
         supertest(app)
           .get('/pants/cheese')
-          .expect(400, { error: "not valid" }, done);
+          .expect(400, { 
+            error: "not valid", 
+            details: "http://www.youtube.com/watch?v=WOdjCb4LwQY" 
+          }, done);
       });
 
       it('should allow valid parameters', function(done) {

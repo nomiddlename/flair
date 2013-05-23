@@ -1,5 +1,5 @@
 var express = require('express')
-, flair = require('./index')
+, flair = require('./lib/index')
 , joi = require('joi')
 , flairui = require('flair-ui')
 , app = express()
@@ -21,39 +21,41 @@ function byId(value) {
 app.use(flair.jsonBodyParser());
 
 //register our schema with flair
-flair.addContentType(
-  "application/vnd.cheese+json",
-  {
-    id: "cheese",
-    type: "object",
-    properties: {
+flair.addContentTypes([
+  { 
+    type: "application/vnd.cheese+json",
+    schema: {
+      id: "cheese",
+      type: "object",
+      properties: {
       name: {
         description: "The name of the cheese",
         type: "string",
         required: true
       },
-      id: {
-        description: "The id of the cheese",
-        type: "integer",
-        required: false //if a cheese has no id, we'll generate one
+        id: {
+          description: "The id of the cheese",
+          type: "integer",
+          required: false //if a cheese has no id, we'll generate one
+        }
+      },
+      //no null or undefined cheeses, thank you
+      required: true
+    }
+  },
+  { 
+    type: "application/vnd.cheese-list+json",
+    schema: {
+      id: "cheeseList",
+      type: "Array",
+      items: { 
+        //this reference will work in swagger, but not
+        //real json-schema
+        "$ref": "cheese"
       }
-    },
-    //no null or undefined cheeses, thank you
-    required: true
-  }
-);
-flair.addContentType(
-  "application/vnd.cheese-list+json",
-  {
-    id: "cheeseList",
-    type: "Array",
-    items: { 
-      //this reference will work in swagger, but not
-      //real json-schema
-      "$ref": "cheese"
     }
   }
-);
+]);
 
 app.get(
   '/cheese',

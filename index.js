@@ -336,31 +336,36 @@ function consumes() {
   var types = Array.prototype.slice.call(arguments)
   , middleware = function consumesMiddleware(req, res, next) {
 
-    var mime = req.header('content-type').split(';')[0];
+    if (req.header('content-type')) {
 
-    if (types.indexOf(mime) > -1) {
-      if (contentTypes[mime]) {
-        if (!req.body) {
-          return next(new Error("Missing req.body for " + req.path));
+      var mime = req.header('content-type').split(';')[0];
+
+      if (types.indexOf(mime) > -1) {
+        if (contentTypes[mime]) {
+          if (!req.body) {
+            return next(new Error("Missing req.body for " + req.path));
+          }
+          var report = jsv.validate(
+            req.body, 
+            contentTypes[mime]
+          );
+          if (report.errors.length > 0) {
+            res.send(400, { 
+              error: 'Body does not match schema for ' + mime, 
+              errors: report.errors 
+            });
+            return;
+          }
         }
-        var report = jsv.validate(
-          req.body, 
-          contentTypes[mime]
-        );
-        if (report.errors.length > 0) {
-          res.send(400, { 
-            error: 'Body does not match schema for ' + mime, 
-            errors: report.errors 
-          });
-          return;
+        if (!req.mime) {
+          req.mime = mime;
         }
+        next();
+      } else {
+        res.send(400, { error: 'Invalid content-type' });
       }
-      if (!req.mime) {
-        req.mime = mime;
-      }
-      next();
     } else {
-      res.send(400, { error: 'Invalid content-type' });
+      res.send(400, { error: 'No content-type specified' });
     }
   };
 

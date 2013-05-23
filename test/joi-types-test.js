@@ -1,5 +1,5 @@
 var should = require('should')
-, flair = require('../index')
+, flair = require('../lib/index')
 , joi = flair.joi
 ;
 

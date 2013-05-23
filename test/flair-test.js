@@ -2,7 +2,7 @@ var should = require('should')
 , supertest = require('supertest')
 , express = require('express')
 , joi = require('joi')
-, flair = require('../index')
+, flair = require('../lib/index')
 ;
 
 describe('flair', function() {

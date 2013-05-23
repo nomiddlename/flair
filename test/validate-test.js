@@ -1,7 +1,7 @@
 var should = require('should')
 , supertest = require('supertest')
 , express = require('express')
-, flair = require('../index')
+, flair = require('../lib/index')
 , joi = flair.joi;
 
 describe("flair", function() {

@@ -1,3 +1,5 @@
+"use strict";
+/* jshint expr:true */
 var should = require('should')
 , supertest = require('supertest')
 , express = require('express')
@@ -15,11 +17,11 @@ describe('flair', function() {
     app = flair.swagger(appToDescribe);
 
     it('should expect an express app to document', function() {
-      (function() { flair.swagger(); }).should.throw();
+      (function() { flair.swagger(); }).should.throwError();
     });
 
     it('should expect an express app with routes', function() {
-      (function() { flair.swagger(express()); }).should.throw();
+      (function() { flair.swagger(express()); }).should.throwError();
     });
 
     it('should not return anything if there are no described routes', function() {
@@ -138,6 +140,7 @@ describe('flair', function() {
           .expect('Content-Type', 'application/json; charset=utf-8')
           .expect(200)
           .end(function(err, res) {
+            /* jshint maxstatements:15 */
             if (err) done(err);
             res.body.apiVersion.should.equal("1.0");
             res.body.swaggerVersion.should.equal("1.1");
@@ -253,8 +256,10 @@ describe('flair', function() {
           .get('/api-doc/pants')
           .end(function(err, res) {
             res.body.apis[0].operations[0].errorResponses.should.have.length(1);
-            res.body.apis[0].operations[0].errorResponses[0].code.should.equal(400);
-            res.body.apis[0].operations[0].errorResponses[0].reason.should.equal('Invalid parameters specified');
+            res.body.apis[0].operations[0].errorResponses[0].should.eql({
+              code: 400,
+              reason: 'Invalid parameters specified'
+            });
             done(err);
           });
       });
@@ -405,7 +410,9 @@ describe('flair', function() {
           .get('/api-doc/pants')
           .expect(200, function(err, res) {
             res.body.apis[0].operations[0].errorResponses.should.have.length(1);
-            res.body.apis[0].operations[0].errorResponses[0].should.eql({ code: 400, reason: 'Invalid content-type' });
+            res.body.apis[0].operations[0].errorResponses[0].should.eql(
+              { code: 400, reason: 'Invalid content-type' }
+            );
             done(err);
           });
       });
@@ -414,6 +421,7 @@ describe('flair', function() {
     describe('when an app with a body schema is described', function() {
       var app = express(), flairedApp;
 
+      /* jshint maxstatements:15 */
       flair.addContentType(
         "application/vnd.thing+json",
         {
@@ -489,7 +497,7 @@ describe('flair', function() {
           });
       });
       
-      it('should not specify the responseClass in the operation section of the api', function(done) {
+      it('should not specify the responseClass in the operation', function(done) {
         supertest(flairedApp)
           .get('/api-doc/pants')
           .expect(200, function(err, res) {

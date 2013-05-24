@@ -1,3 +1,5 @@
+"use strict";
+/* jshint expr:true */
 var should = require('should')
 , flair = require('../lib/index')
 , joi = flair.joi
@@ -56,8 +58,8 @@ describe('flair', function() {
         });
       });
       it('should pick up required and optional', function() {
-        intValidator.params[0].required.should.be.true;
-        intValidator.params[1].required.should.be.false;
+        intValidator.params[0].required.should.equal(true);
+        intValidator.params[1].required.should.equal(false);
       });
       it('should pick up allowable values', function() {
         intValidator.params[1].allowableValues.should.eql({
@@ -78,8 +80,8 @@ describe('flair', function() {
         stringValidator.params[0].name.should.equal("thing");
       });
       it('should pick up required and optional', function() {
-        stringValidator.params[0].required.should.be.true;
-        stringValidator.params[1].required.should.be.false;
+        stringValidator.params[0].required.should.equal(true);
+        stringValidator.params[1].required.should.equal(false);
       });
       it('should pick up allowed values', function() {
         stringValidator.params[1].allowableValues.should.eql({
@@ -101,8 +103,8 @@ describe('flair', function() {
         booleanValidator.params[0].name.should.equal("thing");
       });
       it('should pick up required and optional', function() {
-        booleanValidator.params[0].required.should.be.false;
-        booleanValidator.params[1].required.should.be.true;
+        booleanValidator.params[0].required.should.equal(false);
+        booleanValidator.params[1].required.should.equal(true);
       });
     });
 
@@ -118,9 +120,9 @@ describe('flair', function() {
         doubleValidator.params[0].name.should.eql("thing");
       });
       it('should pick up required and optional', function() {
-        doubleValidator.params[0].required.should.be.true;
-        doubleValidator.params[1].required.should.be.false;
-        doubleValidator.params[2].required.should.be.false;
+        doubleValidator.params[0].required.should.equal(true);
+        doubleValidator.params[1].required.should.equal(false);
+        doubleValidator.params[2].required.should.equal(false);
       });
       it('should pick up min and max', function() {
         doubleValidator.params[1].allowableValues.should.eql({
@@ -147,8 +149,8 @@ describe('flair', function() {
         dateValidator.params[0].dataType.should.equal("Date");
       });
       it('should pick up required and optional', function() {
-        dateValidator.params[0].required.should.be.false;
-        dateValidator.params[1].required.should.be.true;
+        dateValidator.params[0].required.should.equal(false);
+        dateValidator.params[1].required.should.equal(true);
       });
     });
 

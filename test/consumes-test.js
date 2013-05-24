@@ -22,4 +22,30 @@ describe('flair', function() {
         .expect(400, { error: 'No content-type specified' }, done);
     });
   });
+
+  describe('#consumes with a defined schema', function() {
+    var app = express();
+
+    flair.addContentType(
+      'application/consume-thing+json',
+      { id: "thingy", type: "object" }
+    );
+
+    app.post(
+      '/consumes-test',
+      flair.consumes('application/consume-thing+json'),
+      function(req, res) {
+        res.send("Whatever");
+      }
+    );
+
+    it('should return a 400 if no body is provided', function(done) {
+      supertest(app)
+        .post('/consumes-test')
+        .set('Content-Type', 'application/consume-thing+json')
+        .expect(400, { error: "No request body specified" }, done);
+    });
+  });
+    
+     
 });

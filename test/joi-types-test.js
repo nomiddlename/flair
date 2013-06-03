@@ -34,11 +34,6 @@ describe('flair', function() {
       validate.params[1].description.should.be.empty;
     });
 
-    //not entirely sure what to do here.
-    //but I agree, in principle.
-    //array-valued items maybe?
-    it('should pick up multiple values');
-
     describe('joi integers/longs', function() {
       var intValidator = flair.validate({
         thing: joi.types.Number().integer().min(1).max(10).required(),
@@ -152,6 +147,59 @@ describe('flair', function() {
         dateValidator.params[0].required.should.equal(false);
         dateValidator.params[1].required.should.equal(true);
       });
+    });
+
+    describe('Array', function() {
+      var validate = flair.validate({
+        list: joi.types.Array(),
+        another: joi.types.Array().description("more things").required(),
+        onemore: joi.types.Array().includes(joi.types.Number().integer()),
+        specificValues: joi.types.Array().includes(
+          joi.types.String().valid('cheese', 'biscuits', 'lemons')
+        ),
+        minMax: joi.types.Array().includes(
+          joi.types.Number().integer().min(5).max(20)
+        )
+      });
+
+      it('should pick up multiple values with sensible defaults', function() {
+        validate.params[0].should.eql({
+          dataType: "string",
+          paramType: "query",
+          name: "list",
+          description: "",
+          required: false,
+          allowMultiple: true
+        });
+      });
+
+      it('should pick up required', function() {
+        validate.params[1].required.should.equal(true);
+        validate.params[0].required.should.equal(false);
+      });
+
+      it('should pick up description', function() {
+        validate.params[1].description.should.equal('more things');
+      });
+
+
+      /* 
+         These two tests are pending, waiting for joi to handle Array
+         constraints properly 
+      */
+      it('should pick up the data type'/*, function() {
+        validate.params[0].dataType.should.equal('string');
+        validate.params[1].dataType.should.equal('string');
+        validate.params[2].dataType.should.equal('int');
+        validate.params[3].dataType.should.equal('string');
+      }*/);
+
+      it('should pick up allowableValues'/*, function() {
+        validate.params[3].allowableValues.should.eql({
+          valueType: "LIST",
+          values: [ 'cheese', 'biscuits', 'lemons' ]
+        });
+      }*/);
     });
 
   });

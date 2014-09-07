@@ -580,7 +580,7 @@ describe('flair', function() {
       it('should set the content-type of the response', function(done) {
         supertest(app)
           .get('/pants')
-          .expect('Content-Type', 'application/vnd.pants+json')
+          .expect('Content-Type', 'application/vnd.pants+json; charset=utf-8')
           .expect(200, done);
       });
 

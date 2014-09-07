@@ -1,6 +1,6 @@
 {
   "name": "flair-doc",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "description": "Swagger-compliant REST API documentation generator",
   "main": "lib/index.js",
   "scripts": {
@@ -17,9 +17,11 @@
     "documentation"
   ],
   "author": "Gareth Jones <gareth.jones@sensis.com.au>",
+  "contributors": [
+      "Hans Donner <hans@hansdonner.nl>"
+  ],
   "license": "BSD",
   "readmeFilename": "README.md",
-  "gitHead": "ddc08045fcc23df6ae74c954c96179934b4daf29",
   "devDependencies": {
     "mocha": "~1.9.0",
     "should": "~1.2.2",

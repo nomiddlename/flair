@@ -11,7 +11,7 @@ describe('flair', function() {
     var validate = flair.validate({
       thing: joi.types.String().notes("path").description("it's a thing"),
       whatsit: joi.types.String()
-    });
+    }).swaggerInfo;
 
     it('should pick up the name from object property', function() {
       validate.params[0].name.should.equal('thing');
@@ -38,7 +38,7 @@ describe('flair', function() {
       var intValidator = flair.validate({
         thing: joi.types.Number().integer().min(1).max(10).required(),
         another: joi.types.Number().integer().valid(1,3,5,7)
-      });
+      }).swaggerInfo;
 
       it('should be converted to swagger params', function() {
         intValidator.params[0].dataType.should.equal("int");
@@ -68,7 +68,8 @@ describe('flair', function() {
       var stringValidator = flair.validate({
         thing: joi.types.String().required(),
         another: joi.types.String().valid("cheese", "biscuits")
-      });
+      }).swaggerInfo;
+
       it('should be converted to swagger params', function() {
         stringValidator.params[0].dataType.should.equal("string");
         stringValidator.params[0].paramType.should.equal("query");
@@ -90,7 +91,7 @@ describe('flair', function() {
       var booleanValidator = flair.validate({
         thing: joi.types.Boolean(),
         another: joi.types.Boolean().required()
-      });
+      }).swaggerInfo;
 
       it('should be converted to swagger params', function() {
         booleanValidator.params[0].dataType.should.equal("boolean");
@@ -108,7 +109,8 @@ describe('flair', function() {
         thing: joi.types.Number().float().required(),
         another: joi.types.Number().float().min(0).max(1),
         onemore: joi.types.Number().float().valid(0.25, 0.5, 0.75)
-      });
+      }).swaggerInfo;
+
       it('should be converted to swagger params', function() {
         doubleValidator.params[0].dataType.should.eql("double");
         doubleValidator.params[0].paramType.should.eql("query");
@@ -138,7 +140,7 @@ describe('flair', function() {
       var dateValidator = flair.validate({
         thing: joi.types.String().date(),
         another: joi.types.String().date().required()
-      });
+      }).swaggerInfo;
 
       it('should be converted to swagger params', function() {
         dateValidator.params[0].dataType.should.equal("Date");
@@ -160,7 +162,7 @@ describe('flair', function() {
         minMax: joi.types.Array().includes(
           joi.types.Number().integer().min(5).max(20)
         )
-      });
+      }).swaggerInfo;
 
       it('should pick up multiple values with sensible defaults', function() {
         validate.params[0].should.eql({
@@ -183,9 +185,9 @@ describe('flair', function() {
       });
 
 
-      /* 
+      /*
          These two tests are pending, waiting for joi to handle Array
-         constraints properly 
+         constraints properly
       */
       it('should pick up the data type'/*, function() {
         validate.params[0].dataType.should.equal('string');

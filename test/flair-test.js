@@ -58,7 +58,7 @@ describe('flair', function() {
 
     describe('when provided with an api version', function() {
       var app = flair.swagger(appToDescribe, { version: "0.5" });
-      
+
       it('should respond with that version', function(done) {
         supertest(app)
           .get('/api-doc')
@@ -79,7 +79,7 @@ describe('flair', function() {
           .get('/api-doc')
           .expect(404, done);
       });
-      
+
       it('should respond on the docPath', function(done) {
         supertest(app)
           .get('/something')
@@ -89,7 +89,7 @@ describe('flair', function() {
 
     describe('when provided with a base path', function() {
       var app = flair.swagger(appToDescribe, { basePath: "/pants" });
-      
+
       it('should respond with that version and basePath', function(done) {
         supertest(app)
           .get('/api-doc')
@@ -106,13 +106,13 @@ describe('flair', function() {
     describe('when a route has been described', function() {
       var app = express(), flairedApp;
       app.get(
-        '/pants', 
+        '/pants',
         flair.describe("getPants", "short pants", "longer pants"),
         function (req, res) {
           res.send("I'm still here.");
         }
       );
-      
+
       flairedApp = flair.swagger(app);
 
       it('should include the top-level resource path in the apis array', function(done) {
@@ -239,9 +239,9 @@ describe('flair', function() {
       it('should validate the parameters', function(done) {
         supertest(app)
           .get('/pants/cheese')
-          .expect(400, { 
-            error: "not valid", 
-            details: "http://www.youtube.com/watch?v=WOdjCb4LwQY" 
+          .expect(400, {
+            error: "the value of id must be a number",
+            details: "http://www.youtube.com/watch?v=WOdjCb4LwQY"
           }, done);
       });
 
@@ -250,7 +250,7 @@ describe('flair', function() {
           .get('/pants/1')
           .expect(200, 'blah', done);
       });
-      
+
       it('should add a 400 bad request to the error responses', function(done) {
         supertest(flairedApp)
           .get('/api-doc/pants')
@@ -263,12 +263,12 @@ describe('flair', function() {
             done(err);
           });
       });
-      
+
     });
 
     describe('when an app with multiple operations on a resource is described', function() {
       var app = express(), flairedApp;
-      
+
       app.get(
         '/pants/:id',
         flair.describe("getPants", "short pants", "long pants"),
@@ -339,7 +339,7 @@ describe('flair', function() {
             }
           });
       });
-      
+
       it('should set the consumes value of the operation', function(done) {
         supertest(flairedApp)
           .get('/api-doc/pants')
@@ -443,7 +443,7 @@ describe('flair', function() {
           required: true
         }
       );
-      
+
       app.use(flair.jsonBodyParser());
       app.post(
         '/pants',
@@ -496,7 +496,7 @@ describe('flair', function() {
             done(err);
           });
       });
-      
+
       it('should not specify the responseClass in the operation', function(done) {
         supertest(flairedApp)
           .get('/api-doc/pants')
@@ -580,7 +580,7 @@ describe('flair', function() {
       it('should set the content-type of the response', function(done) {
         supertest(app)
           .get('/pants')
-          .expect('Content-Type', 'application/vnd.pants+json')
+          .expect('Content-Type', 'application/vnd.pants+json; charset=utf-8')
           .expect(200, done);
       });
 

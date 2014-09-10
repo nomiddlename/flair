@@ -1,9 +1,9 @@
 "use strict";
 var should = require('should')
-, supertest = require('supertest')
-, express = require('express')
-, flair = require('../lib/index')
-, joi = flair.joi;
+  , supertest = require('supertest')
+  , express = require('express')
+  , flair = require('../lib/index')
+  , joi = flair.joi;
 
 describe("flair", function() {
   describe("#validate", function() {
@@ -16,7 +16,7 @@ describe("flair", function() {
         size: joi.types.String().valid("small", "medium", "large"),
         "X-Men-Are-Awesome": joi.types.String().notes("header").valid("yes")
       }),
-      function (req, res) {
+      function(req, res) {
         res.send("Yippee-skippy!");
       }
     );

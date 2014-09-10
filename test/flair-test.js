@@ -1,27 +1,32 @@
 "use strict";
 /* jshint expr:true */
 var should = require('should')
-, supertest = require('supertest')
-, express = require('express')
-, joi = require('joi')
-, flair = require('../lib/index')
-;
+  , supertest = require('supertest')
+  , express = require('express')
+  , joi = require('joi')
+  , flair = require('../lib/index')
+  ;
 
 describe('flair', function() {
   describe('#swagger', function() {
     var appToDescribe = express()
-    , app;
+      , app;
 
     //must have at least one route defined
-    appToDescribe.get('/something', function() {});
+    appToDescribe.get('/something', function() {
+    });
     app = flair.swagger(appToDescribe);
 
     it('should expect an express app to document', function() {
-      (function() { flair.swagger(); }).should.throwError();
+      (function() {
+        flair.swagger();
+      }).should.throwError();
     });
 
     it('should expect an express app with routes', function() {
-      (function() { flair.swagger(express()); }).should.throwError();
+      (function() {
+        flair.swagger(express());
+      }).should.throwError();
     });
 
     it('should not return anything if there are no described routes', function() {
@@ -108,7 +113,7 @@ describe('flair', function() {
       app.get(
         '/pants',
         flair.describe("getPants", "short pants", "longer pants"),
-        function (req, res) {
+        function(req, res) {
           res.send("I'm still here.");
         }
       );
@@ -177,7 +182,9 @@ describe('flair', function() {
       );
       app.get(
         '/notdescribed',
-        function(req, res) { res.send("not described"); }
+        function(req, res) {
+          res.send("not described");
+        }
       );
       flairedApp = flair.swagger(app);
 

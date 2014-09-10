@@ -1,8 +1,8 @@
 "use strict";
 var should = require('should')
-, supertest = require('supertest')
-, express = require('express')
-, flair = require('../lib/index');
+  , supertest = require('supertest')
+  , express = require('express')
+  , flair = require('../lib/index');
 
 describe('flair', function() {
   describe('#consumes', function() {
@@ -46,6 +46,6 @@ describe('flair', function() {
         .expect(400, { error: "No request body specified" }, done);
     });
   });
-    
-     
+
+
 });

@@ -1,9 +1,9 @@
 "use strict";
 /* jshint expr:true */
 var should = require('should')
-, flair = require('../lib/index')
-, joi = flair.joi
-;
+  , flair = require('../lib/index')
+  , joi = flair.joi
+  ;
 
 describe('flair', function() {
   describe('#validate', function() {
@@ -37,7 +37,7 @@ describe('flair', function() {
     describe('joi integers/longs', function() {
       var intValidator = flair.validate({
         thing: joi.types.Number().integer().min(1).max(10).required(),
-        another: joi.types.Number().integer().valid(1,3,5,7)
+        another: joi.types.Number().integer().valid(1, 3, 5, 7)
       }).swaggerInfo;
 
       it('should be converted to swagger params', function() {
@@ -59,7 +59,7 @@ describe('flair', function() {
       it('should pick up allowable values', function() {
         intValidator.params[1].allowableValues.should.eql({
           valueType: "LIST",
-          values: [ 7,5,3,1 ]
+          values: [ 7, 5, 3, 1 ]
         });
       });
     });
@@ -186,22 +186,22 @@ describe('flair', function() {
 
 
       /*
-         These two tests are pending, waiting for joi to handle Array
-         constraints properly
-      */
+       These two tests are pending, waiting for joi to handle Array
+       constraints properly
+       */
       it('should pick up the data type'/*, function() {
-        validate.params[0].dataType.should.equal('string');
-        validate.params[1].dataType.should.equal('string');
-        validate.params[2].dataType.should.equal('int');
-        validate.params[3].dataType.should.equal('string');
-      }*/);
+       validate.params[0].dataType.should.equal('string');
+       validate.params[1].dataType.should.equal('string');
+       validate.params[2].dataType.should.equal('int');
+       validate.params[3].dataType.should.equal('string');
+       }*/);
 
       it('should pick up allowableValues'/*, function() {
-        validate.params[3].allowableValues.should.eql({
-          valueType: "LIST",
-          values: [ 'cheese', 'biscuits', 'lemons' ]
-        });
-      }*/);
+       validate.params[3].allowableValues.should.eql({
+       valueType: "LIST",
+       values: [ 'cheese', 'biscuits', 'lemons' ]
+       });
+       }*/);
     });
 
   });

@@ -1,37 +1,41 @@
 {
   "name": "flair-doc",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Swagger-compliant REST API documentation generator",
-  "main": "lib/index.js",
-  "scripts": {
-    "test": "mocha"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/nomiddlename/flair.git"
-  },
   "keywords": [
     "rest",
     "swagger",
     "express",
     "documentation"
   ],
+  "license": "BSD",
   "author": "Gareth Jones <gareth.jones@sensis.com.au>",
   "contributors": [
-      "Hans Donner <hans@hansdonner.nl>"
+    "Hans Donner <hans@hansdonner.nl>"
   ],
-  "license": "BSD",
-  "readmeFilename": "README.md",
-  "devDependencies": {
-    "mocha": "~1.9.0",
-    "should": "~1.2.2",
-    "supertest": "~0.6.0",
-    "flair-ui": "0.0.3"
+  "homepage": "https://github.com/nomiddlename/flair",
+  "bugs": "https://github.com/nomiddlename/flair/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nomiddlename/flair.git"
   },
+
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "readmeFilename": "README.md",
+
   "dependencies": {
     "express": "^4.8.8",
     "joi": "~0.3.4",
     "jsonschema": "~0.3.2",
     "lodash": "^2.4.1"
+  },
+  "devDependencies": {
+    "mocha": "~1.9.0",
+    "should": "~1.2.2",
+    "supertest": "~0.6.0",
+    "flair-ui": "0.0.3"
   }
 }

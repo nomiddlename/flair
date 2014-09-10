@@ -1,9 +1,9 @@
 "use strict";
 var should = require('should')
-, supertest = require('supertest')
-, express = require('express')
-, jsonBodyParser = require('../lib').jsonBodyParser
-;
+  , supertest = require('supertest')
+  , express = require('express')
+  , jsonBodyParser = require('../lib').jsonBodyParser
+  ;
 
 describe('flair', function() {
   describe('#jsonBodyParser', function() {
@@ -60,9 +60,9 @@ describe('flair', function() {
 
   describe('#jsonBodyParser with another bodyparser', function() {
     var app = express();
-    app.use(function(req, res, next) { 
-      req.body = "Im crimed it all."; 
-      req._body = true; 
+    app.use(function(req, res, next) {
+      req.body = "Im crimed it all.";
+      req._body = true;
       next();
     });
     app.use(jsonBodyParser());
